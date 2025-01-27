@@ -1,0 +1,60 @@
+services:
+    messageboard-front:
+        image: slaveng/messageboard-front:react
+        container_name: messageboard-front
+        networks: 
+            - my-network
+
+    messageboard-api:
+        image: slaveng/messageboard-api:testing:react
+        container_name: messageboard-api
+        env_file: .env
+        depends_on:
+            - postgres-database
+        networks: 
+            - my-network
+
+    votingapp-front:
+        image: votingapp-front:latest
+        container_name: slaveng/votingapp-front:react
+        networks: 
+            - my-network
+
+    votingapp-api:
+        image: slaveng/votingapp-api:react
+        container_name: votingapp-api
+        env_file: .env
+        depends_on:
+            - postgres-database
+        networks: 
+            - my-network
+
+    reverse-proxy:
+        image: slaveng/reverse-proxy:react
+        container_name: reverse-proxy
+        ports:
+            - "80:80"
+            - "443:443"
+        depends_on:
+            - messageboard-api
+            - messageboard-front
+            - votingapp-api
+            - votingapp-front
+        networks: 
+            - my-network
+
+    postgres-database:
+        image: postgres:latest
+        container_name: postgres-database
+        env_file: .env
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        networks: 
+            - my-network
+
+volumes:
+  postgres-data:
+
+networks:
+  my-network:
+    driver: bridge
