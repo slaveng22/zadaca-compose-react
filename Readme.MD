@@ -49,7 +49,7 @@ POSTGRES_HOST=postgres-database
 POSTGRES_DB_MESSAGE=message_board
 POSTGRES_DB_VOTE=voting_app
 POSTGRES_PASSWORD=<enter the password for your database>
-POSTGRES_PORT=543
+POSTGRES_PORT=5432
 ```
 
 ### Manipulate hosts file on Windows machine
