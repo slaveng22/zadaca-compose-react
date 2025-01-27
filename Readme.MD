@@ -28,6 +28,9 @@ docker-compose down
 - http://votingapp-front
 - http://votingapp-api:40001
 
+## Database
+- postgres-database:5432
+
 ## Proxy
 - http://reverse-proxy
 
