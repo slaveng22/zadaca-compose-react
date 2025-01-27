@@ -6,7 +6,7 @@ services:
             - my-network
 
     messageboard-api:
-        image: slaveng/messageboard-api:testing:react
+        image: slaveng/messageboard-api:react
         container_name: messageboard-api
         env_file: .env
         depends_on:
@@ -15,8 +15,8 @@ services:
             - my-network
 
     votingapp-front:
-        image: votingapp-front:latest
-        container_name: slaveng/votingapp-front:react
+        image: slaveng/votingapp-front:react
+        container_name: votingapp-front
         networks: 
             - my-network
 

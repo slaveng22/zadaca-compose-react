@@ -26,6 +26,19 @@
 - https://voter.slaven.internal ---> http://votingapp-front
 - https://voter.slaven.internal/api ---> http://votingapp-api:40001
 
+# .env file
+
+- Don't forget to create .env file in the root directory of this project
+- Template
+
+```
+POSTGRES_USER=postgres
+POSTGRES_HOST=postgres-database
+POSTGRES_DB_MESSAGE=message_board
+POSTGRES_DB_VOTE=voting_app
+POSTGRES_PASSWORD=<enter the password for your database>
+POSTGRES_PORT=543
+```
 
 ### Manipulate hosts file on Windows machine
 
