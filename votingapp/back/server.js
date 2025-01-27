@@ -18,51 +18,65 @@ const pool = new Pool(dbConfig);
 app.use(cors());
 app.use(express.json());
 
+// Delay function for retries
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Initialize the database and create the votes table
 const initDb = async () => {
-  try {
-    const client = new Client({
-      ...dbConfig,
-      database: 'postgres', // Connect to the default database to manage the target database
-    });
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      // Create a client to connect to the default 'postgres' database
+      const client = new Client({
+        ...dbConfig,
+        database: 'postgres', // Connect to the default database to manage the target database
+      });
 
-    await client.connect();
+      await client.connect();
+      console.log('Connected to the default database.');
 
-    // Check if the target database exists, and create it if necessary
-    const dbCheckQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
-    const dbCheckResult = await client.query(dbCheckQuery);
+      // Check if the target database exists
+      const dbCheckQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
+      const dbCheckResult = await client.query(dbCheckQuery);
 
-    if (dbCheckResult.rowCount === 0) {
-      await client.query(`CREATE DATABASE "${dbConfig.database}"`);
-      console.log(`Database "${dbConfig.database}" created successfully.`);
-    } else {
-      console.log(`Database "${dbConfig.database}" already exists.`);
+      if (dbCheckResult.rowCount === 0) {
+        console.log(`Database "${dbConfig.database}" does not exist. Creating it...`);
+        await client.query(`CREATE DATABASE "${dbConfig.database}"`);
+        console.log(`Database "${dbConfig.database}" created successfully.`);
+      }
+
+      // Close the connection to the default database
+      await client.end();
+
+      // Initialize the votes table in the target database
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS votes (
+          option VARCHAR(10) PRIMARY KEY,
+          count INTEGER NOT NULL DEFAULT 0
+        )
+      `);
+      console.log('Votes table initialized.');
+
+      // Ensure both voting options exist in the table
+      await pool.query(`
+        INSERT INTO votes (option, count)
+        VALUES ('optionA', 0), ('optionB', 0)
+        ON CONFLICT (option) DO NOTHING
+      `);
+      console.log('Vote options initialized.');
+
+      return; // Exit the retry loop if initialization is successful
+    } catch (error) {
+      console.error('Database initialization failed. Retrying...', error);
+      retries -= 1;
+      await delay(5000); // Wait 5 seconds before retrying
     }
-
-    await client.end();
-
-    // Initialize the votes table in the target database
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS votes (
-        option VARCHAR(10) PRIMARY KEY,
-        count INTEGER NOT NULL DEFAULT 0
-      )
-    `);
-
-    // Ensure both voting options exist
-    await pool.query(`
-      INSERT INTO votes (option, count)
-      VALUES ('optionA', 0), ('optionB', 0)
-      ON CONFLICT (option) DO NOTHING
-    `);
-
-    console.log('Database and table initialized successfully.');
-  } catch (error) {
-    console.error('Error initializing the database:', error);
   }
+  console.error('Failed to initialize the database after multiple retries.');
+  process.exit(1); // Exit if the retries are exhausted
 };
 
-initDb();
+initDb(); // Call to initialize the database
 
 // Endpoint to get vote counts
 app.get('/votes', async (req, res) => {
@@ -95,4 +109,5 @@ app.post('/votes', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(40001, () => console.log('Voting App Backend running on http://localhost:40001'));

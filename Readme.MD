@@ -4,7 +4,19 @@
 - Postgres database running in docker container with pesistant storage
 - All containers running in custom bridge network called "my-network" and they can comunicate in this network
 - Apps can be rached on internal subdomains "messenger.slaven.internal" and "voter.slaven.internal"
-- Follow instructions to add domain to your hostfile and to create certificate
+- Follow instructions to add domain to your hostfile
+
+# Run containers and create network and volume
+
+```bash
+docker-compose up -d
+```
+
+# Stop and remove containers and networks
+
+```bash
+docker-compose down 
+```
 
 # Services
 
@@ -21,10 +33,10 @@
 
 ### Redirect
 
-- https://messenger.slaven.internal ---> http://messageboard-front
-- https://messenger.slaven.internal/api ---> http://messageboard-api:30001
-- https://voter.slaven.internal ---> http://votingapp-front
-- https://voter.slaven.internal/api ---> http://votingapp-api:40001
+- http://messenger.slaven.internal ---> http://messageboard-front
+- http://messenger.slaven.internal/api ---> http://messageboard-api:30001
+- http://voter.slaven.internal ---> http://votingapp-front
+- http://voter.slaven.internal/api ---> http://votingapp-api:40001
 
 # .env file
 
@@ -57,7 +69,3 @@ $lines = Get-Content -Path $hostsFile
 $updatedLines = $lines | Where-Object { $_ -notmatch "127.0.0.1\s+messenger.slaven.internal" -and $_ -notmatch "127.0.0.1\s+voter.slaven.internal" }
 $updatedLines | Set-Content -Path $hostsFile
 ```
-
-
-
-# Certificate

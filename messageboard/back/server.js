@@ -18,43 +18,56 @@ const pool = new Pool(dbConfig);
 app.use(cors());
 app.use(express.json());
 
+// Delay function for retries
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Initialize the database
 const initDb = async () => {
-  try {
-    const client = new Client({
-      ...dbConfig,
-      database: 'postgres', // Connect to default database to check/create the target database
-    });
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      const client = new Client({
+        ...dbConfig,
+        database: 'postgres', // Connect to the default database to manage the target database
+      });
 
-    await client.connect();
+      await client.connect();
+      console.log('Connected to the default database.');
 
-    // Check if the target database exists, if not create it
-    const dbCheckQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
-    const dbCheckResult = await client.query(dbCheckQuery);
+      // Check if the target database exists
+      const dbCheckQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
+      const dbCheckResult = await client.query(dbCheckQuery);
 
-    if (dbCheckResult.rowCount === 0) {
-      console.log(`Database "${dbConfig.database}" does not exist. Creating it...`);
-      await client.query(`CREATE DATABASE "${dbConfig.database}"`);
-      console.log(`Database "${dbConfig.database}" created successfully.`);
+      if (dbCheckResult.rowCount === 0) {
+        console.log(`Database "${dbConfig.database}" does not exist. Creating it...`);
+        await client.query(`CREATE DATABASE "${dbConfig.database}"`);
+        console.log(`Database "${dbConfig.database}" created successfully.`);
+      }
+
+      // Close the connection to the default database
+      await client.end();
+
+      // Initialize the "messages" table in the target database
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id SERIAL PRIMARY KEY,
+          content TEXT NOT NULL
+        )
+      `);
+      console.log('Table "messages" initialized.');
+
+      return; // Exit the retry loop if initialization is successful
+    } catch (error) {
+      console.error('Database initialization failed. Retrying...', error);
+      retries -= 1;
+      await delay(5000); // Wait 5 seconds before retrying
     }
-
-    await client.end();
-
-    // Now connect to the target database and create the "messages" table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id SERIAL PRIMARY KEY,
-        content TEXT NOT NULL
-      )
-    `);
-
-    console.log('Table "messages" is ready.');
-  } catch (error) {
-    console.error('Error initializing the database:', error.message);
-    process.exit(1);
   }
+  console.error('Failed to initialize the database after multiple retries.');
+  process.exit(1); // Exit if the retries are exhausted
 };
-initDb();
+
+initDb(); // Call to initialize the database
 
 // Get all messages
 app.get('/messages', async (req, res) => {
