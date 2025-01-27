@@ -51,7 +51,7 @@ POSTGRES_USER=postgres
 POSTGRES_HOST=postgres-database
 POSTGRES_DB_MESSAGE=message_board
 POSTGRES_DB_VOTE=voting_app
-POSTGRES_PASSWORD=<enter the password for your database>
+POSTGRES_PASSWORD=<ask maintainer for postgres password>
 POSTGRES_PORT=5432
 ```
 
