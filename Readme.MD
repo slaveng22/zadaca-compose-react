@@ -39,8 +39,10 @@ Add-Content -Path $env:windir\System32\drivers\etc\hosts -Value "`n127.0.0.1`tvo
 - To remove internal domain, open PowerShell as admin and run
 
 ```Powershell
-(Get-Content -Path $env:windir\System32\drivers\etc\hosts) | Where-Object { $_ -notmatch "127.0.0.1\s+tmessenger.slaven.internal" } | Set-Content -Path $env:windir\System32\drivers\etc\hosts
-(Get-Content -Path $env:windir\System32\drivers\etc\hosts) | Where-Object { $_ -notmatch "127.0.0.1\s+tvoter.slaven.internal" } | Set-Content -Path $env:windir\System32\drivers\etc\hosts
+$hostsFile = "$env:windir\System32\drivers\etc\hosts"
+$lines = Get-Content -Path $hostsFile
+$updatedLines = $lines | Where-Object { $_ -notmatch "127.0.0.1\s+messenger.slaven.internal" -and $_ -notmatch "127.0.0.1\s+voter.slaven.internal" }
+$updatedLines | Set-Content -Path $hostsFile
 ```
 
 
