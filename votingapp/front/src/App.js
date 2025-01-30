@@ -5,12 +5,12 @@ const App = () => {
   const [votes, setVotes] = useState({ optionA: 0, optionB: 0 });
 
   const fetchVotes = async () => {
-    const response = await axios.get('http://voter.slaven.internal/api/votes');
+    const response = await axios.get('https://voter.slaven.internal/api/votes');
     setVotes(response.data);
   };
 
   const castVote = async (option) => {
-    await axios.post('http://voter.slaven.internal/api/votes', { option });
+    await axios.post('https://voter.slaven.internal/api/votes', { option });
     fetchVotes();
   };
 

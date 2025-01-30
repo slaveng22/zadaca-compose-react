@@ -4,7 +4,7 @@
 - Postgres database running in docker container with pesistant storage
 - All containers running in custom bridge network called "my-network" and they can comunicate in this network
 - Apps can be rached on internal subdomains "messenger.slaven.internal" and "voter.slaven.internal"
-- Follow instructions to add domain to your hostfile
+- Follow instructions to add domain to your hostfile and to install certificate.
 
 # Run containers and create network and volume
 
@@ -36,10 +36,10 @@ docker-compose down
 
 ### Redirect
 
-- http://messenger.slaven.internal ---> http://messageboard-front
-- http://messenger.slaven.internal/api ---> http://messageboard-api:30001
-- http://voter.slaven.internal ---> http://votingapp-front
-- http://voter.slaven.internal/api ---> http://votingapp-api:40001
+- https://messenger.slaven.internal ---> http://messageboard-front
+- https://messenger.slaven.internal/api ---> http://messageboard-api:30001
+- https://voter.slaven.internal ---> http://votingapp-front
+- https://voter.slaven.internal/api ---> http://votingapp-api:40001
 
 # .env file
 
@@ -55,7 +55,7 @@ POSTGRES_PASSWORD=<ask maintainer for postgres password>
 POSTGRES_PORT=5432
 ```
 
-### Manipulate hosts file on Windows machine
+# Manipulate hosts file on Windows machine
 
 - To add internal domain, open PowerShell as admin and run
 
@@ -72,3 +72,35 @@ $lines = Get-Content -Path $hostsFile
 $updatedLines = $lines | Where-Object { $_ -notmatch "127.0.0.1\s+messenger.slaven.internal" -and $_ -notmatch "127.0.0.1\s+voter.slaven.internal" }
 $updatedLines | Set-Content -Path $hostsFile
 ```
+
+# Install certificate on your Windows machine
+
+- Download certificate **slaven.crt** from git repo
+
+- Open PowerShell as admin and run this script to import certificate
+```PowerShell
+$certpath=Read-Host -Prompt "Eneter path to the downloaded certificate"
+if (!(Test-Path -Path $certpath)){
+Write-Error -Message "Path to the certificate doesn't exist!" -RecommendedAction "Run script again and enter new path!"
+}
+try {
+    Get-ChildItem -Path $certpath | Import-Certificate -CertStoreLocation Cert:\LocalMachine\Root
+    Write-Host "Certificate imported successfully."
+}
+catch {
+    Write-Error "An error occurred: $($_.Exception.Message)"
+}
+```
+
+- To remove certificate, open PowerShell as admin and run following script
+```Powershell
+$cert = Get-ChildItem -Path "Cert:\LocalMachine\Root" | Where-Object {$_.Subject -like "*CN=*.slaven*"}
+if ($cert) {
+	Remove-Item -Path $cert.PSPath -Force
+	Write-Host "Certificate removed successfully."
+}
+else {
+	Write-Warning "Certificate with subject 'CN=*.slaven' not found."
+}
+``` 
+
